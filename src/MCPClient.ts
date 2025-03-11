@@ -10,6 +10,8 @@ import {
   LoggingLevel,
   LoggingMessageNotificationSchema,
   Progress,
+  ReadResourceRequest,
+  ReadResourceResult,
   Resource,
   Tool,
   type CallToolResult,
@@ -183,6 +185,15 @@ export class MCPClient extends MCPClientEventEmitter {
         ? transformRequestOptions(options.requestOptions)
         : undefined,
     )) as TResult;
+  }
+
+  async getResource(
+    params: ReadResourceRequest["params"],
+    options?: {
+      requestOptions?: RequestOptions;
+    },
+  ): Promise<ReadResourceResult> {
+    return await this.client.readResource(params, options?.requestOptions);
   }
 
   async setLoggingLevel(level: LoggingLevel) {

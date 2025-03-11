@@ -74,6 +74,12 @@ const tools = await client.getAllTools();
 const resources = await client.getAllResources();
 ```
 
+### Reading a resource
+
+```ts
+const resource = await client.getResource({ uri: "file:///logs/app.log" });
+```
+
 ### Setting the logging level
 
 ```ts
