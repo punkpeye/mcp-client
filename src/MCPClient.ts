@@ -54,6 +54,42 @@ const MCPClientEventEmitterBase: {
 
 class MCPClientEventEmitter extends MCPClientEventEmitterBase {}
 
+async function fetchAllPages<T>(
+  client: any,
+  requestParams: { method: string; params?: Record<string, any> },
+  schema: any,
+  getItems: (response: any) => T[],
+  requestOptions?: RequestOptions,
+): Promise<T[]> {
+  const allItems: T[] = [];
+  let cursor: string | undefined;
+
+  do {
+    // Clone the params to avoid modifying the original object
+    const params = { ...(requestParams.params || {}) };
+
+    // Add cursor to params if it exists
+    if (cursor) {
+      params.cursor = cursor;
+    }
+
+    // Make the request
+    const response = await client.request(
+      { method: requestParams.method, params },
+      schema,
+      requestOptions,
+    );
+
+    // Use the getter function to extract items
+    allItems.push(...getItems(response));
+
+    // Update cursor for next iteration
+    cursor = response.nextCursor;
+  } while (cursor);
+
+  return allItems;
+}
+
 export class MCPClient extends MCPClientEventEmitter {
   private client: Client;
   private transports: SSEClientTransport[] = [];
@@ -95,27 +131,13 @@ export class MCPClient extends MCPClientEventEmitter {
   async getTools(options?: {
     requestOptions?: RequestOptions;
   }): Promise<Tool[]> {
-    let cursor: string | undefined;
-
-    const tools: Tool[] = [];
-
-    while (true) {
-      const result = await this.client.request(
-        { method: "tools/list", params: { cursor: cursor } },
-        ListToolsResultSchema,
-        options?.requestOptions,
-      );
-
-      tools.push(...result.tools);
-
-      cursor = result.nextCursor;
-
-      if (!cursor) {
-        break;
-      }
-    }
-
-    return tools;
+    return fetchAllPages(
+      this.client,
+      { method: "tools/list" },
+      ListToolsResultSchema,
+      (result) => result.tools,
+      options?.requestOptions,
+    );
   }
 
   async callTool<
