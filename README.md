@@ -37,17 +37,28 @@ const result = await client.callTool({
 ### Calling a tool with a custom result schema
 
 ```ts
-const result = await client.callTool({
-  name: "add",
-  arguments: { a: 1, b: 2 },
-}, {
-  resultSchema: z.object({
-    content: z.array(z.object({
-      type: z.literal("text"),
-      text: z.string(),
-    })),
-  }),
-});
+const result = await client.callTool(
+  {
+    name: "add",
+    arguments: { a: 1, b: 2 },
+  },
+  {
+    resultSchema: z.object({
+      content: z.array(
+        z.object({
+          type: z.literal("text"),
+          text: z.string(),
+        }),
+      ),
+    }),
+  },
+);
+```
+
+### Listing tools
+
+```ts
+const tools = await client.getTools();
 ```
 
 ### Receiving notification

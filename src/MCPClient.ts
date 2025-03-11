@@ -5,8 +5,10 @@ import {
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import {
   Implementation,
+  ListToolsResultSchema,
   Progress,
   ProgressNotificationSchema,
+  Tool,
   type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import EventEmitter from "events";
@@ -88,6 +90,32 @@ export class MCPClient extends MCPClientEventEmitter {
     await this.client.ping(options?.requestOptions);
 
     return null;
+  }
+
+  async getTools(options?: {
+    requestOptions?: RequestOptions;
+  }): Promise<Tool[]> {
+    let cursor: string | undefined;
+
+    const tools: Tool[] = [];
+
+    while (true) {
+      const result = await this.client.request(
+        { method: "tools/list", params: { cursor: cursor } },
+        ListToolsResultSchema,
+        options?.requestOptions,
+      );
+
+      tools.push(...result.tools);
+
+      cursor = result.nextCursor;
+
+      if (!cursor) {
+        break;
+      }
+    }
+
+    return tools;
   }
 
   async callTool<

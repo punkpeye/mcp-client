@@ -75,6 +75,62 @@ test("pings a server", async () => {
   });
 });
 
+test("gets tools", async () => {
+  await runWithTestServer({
+    server: async () => {
+      const server = new FastMCP({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      server.addTool({
+        name: "add",
+        description: "Add two numbers",
+        parameters: z.object({
+          a: z.number(),
+          b: z.number(),
+        }),
+        execute: async (args) => {
+          return String(args.a + args.b);
+        },
+      });
+
+      return server;
+    },
+    run: async ({ sseUrl }) => {
+      const client = new MCPClient({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      await client.connect({ sseUrl });
+
+      const tools = await client.getTools();
+
+      expect(tools).toEqual([
+        {
+          description: "Add two numbers",
+          inputSchema: {
+            $schema: "http://json-schema.org/draft-07/schema#",
+            additionalProperties: false,
+            properties: {
+              a: {
+                type: "number",
+              },
+              b: {
+                type: "number",
+              },
+            },
+            required: ["a", "b"],
+            type: "object",
+          },
+          name: "add",
+        },
+      ]);
+    },
+  });
+});
+
 test("calls a tool", async () => {
   await runWithTestServer({
     server: async () => {
@@ -150,18 +206,22 @@ test("calls a tool with a custom result schema", async () => {
 
       await client.connect({ sseUrl });
 
-      const result = await client.callTool({
-        name: "add",
-        arguments: {
-          a: 1,
-          b: 2,
+      const result = await client.callTool(
+        {
+          name: "add",
+          arguments: {
+            a: 1,
+            b: 2,
+          },
         },
-      }, {
-        resultSchema: z.object({
-          content: z.array(z.object({
-            type: z.literal("text"),
-            text: z.string(),
-          })),
+        {
+          resultSchema: z.object({
+            content: z.array(
+              z.object({
+                type: z.literal("text"),
+                text: z.string(),
+              }),
+            ),
           }),
         },
       );
