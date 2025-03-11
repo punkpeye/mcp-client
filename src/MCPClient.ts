@@ -19,6 +19,7 @@ import {
   ReadResourceRequest,
   ReadResourceResult,
   Resource,
+  ResourceTemplate,
   Tool,
   type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -230,6 +231,27 @@ export class MCPClient extends MCPClientEventEmitter {
     },
   ): Promise<GetPromptResult> {
     return await this.client.getPrompt(params, options?.requestOptions);
+  }
+
+  async getAllResourceTemplates(options?: {
+    requestOptions?: RequestOptions;
+  }): Promise<ResourceTemplate[]> {
+    let cursor: string | undefined;
+
+    const allItems: ResourceTemplate[] = [];
+
+    do {
+      const response = await this.client.listResourceTemplates(
+        { cursor },
+        options?.requestOptions,
+      );
+
+      allItems.push(...response.resourceTemplates);
+
+      cursor = response.nextCursor;
+    } while (cursor);
+
+    return allItems;
   }
 
   async setLoggingLevel(level: LoggingLevel) {

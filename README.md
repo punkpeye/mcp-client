@@ -108,6 +108,12 @@ const result = await client.complete({
 });
 ```
 
+### Listing resource templates
+
+```ts
+const resourceTemplates = await client.getAllResourceTemplates();
+```
+
 ### Receiving logging messages
 
 ```ts
