@@ -559,7 +559,6 @@ test("clients reads a resource that returns multiple resources", async () => {
   });
 });
 
-
 test("adds prompts", async () => {
   await runWithTestServer({
     server: async () => {
@@ -619,6 +618,63 @@ test("adds prompts", async () => {
           ],
         },
       ]);
+    },
+  });
+});
+
+test("completes prompt arguments", async () => {
+  await runWithTestServer({
+    server: async () => {
+      const server = new FastMCP({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      server.addPrompt({
+        name: "countryPoem",
+        description: "Writes a poem about a country",
+        load: async ({ name }) => {
+          return `Hello, ${name}!`;
+        },
+        arguments: [
+          {
+            name: "name",
+            description: "Name of the country",
+            required: true,
+            complete: async (value) => {
+              if (value === "Germ") {
+                return {
+                  values: ["Germany"],
+                };
+              }
+
+              return {
+                values: [],
+              };
+            },
+          },
+        ],
+      });
+
+      return server;
+    },
+    run: async ({ client }) => {
+      const response = await client.complete({
+        ref: {
+          type: "ref/prompt",
+          name: "countryPoem",
+        },
+        argument: {
+          name: "name",
+          value: "Germ",
+        },
+      });
+
+      expect(response).toEqual({
+        completion: {
+          values: ["Germany"],
+        },
+      });
     },
   });
 });

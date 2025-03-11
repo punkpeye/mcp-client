@@ -7,8 +7,8 @@ An [MCP](https://glama.ai/blog/2024-11-25-model-context-protocol-quickstart) cli
 
 ## Why?
 
-* [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) provides a client for the MCP protocol, but it's a little verbose for my taste. This client abstracts away some of the lower-level details and provides a more convenient API.
-* The MCP protocol follows some REST-like naming conventions, like `listTools` and `readResource`, but those names look a bit awkward in TypeScript. This client uses more typical method names, like `getTools` and `getResource`.
+- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) provides a client for the MCP protocol, but it's a little verbose for my taste. This client abstracts away some of the lower-level details and provides a more convenient API.
+- The MCP protocol follows some REST-like naming conventions, like `listTools` and `readResource`, but those names look a bit awkward in TypeScript. This client uses more typical method names, like `getTools` and `getResource`.
 
 ## Usage
 
@@ -97,6 +97,15 @@ const prompts = await client.getAllPrompts();
 
 ```ts
 await client.setLoggingLevel("debug");
+```
+
+### Completing a prompt
+
+```ts
+const result = await client.complete({
+  ref: { type: "ref/prompt", name: "git-commit" },
+  argument: { name: "changes", value: "Add a new feature" },
+});
 ```
 
 ### Receiving logging messages

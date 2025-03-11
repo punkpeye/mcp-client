@@ -4,6 +4,8 @@ import {
 } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import {
+  CompleteRequest,
+  CompleteResult,
   GetPromptRequest,
   GetPromptResult,
   Implementation,
@@ -203,6 +205,15 @@ export class MCPClient extends MCPClientEventEmitter {
     )) as TResult;
   }
 
+  async complete(
+    params: CompleteRequest["params"],
+    options?: {
+      requestOptions?: RequestOptions;
+    },
+  ): Promise<CompleteResult> {
+    return await this.client.complete(params, options?.requestOptions);
+  }
+
   async getResource(
     params: ReadResourceRequest["params"],
     options?: {
@@ -212,9 +223,12 @@ export class MCPClient extends MCPClientEventEmitter {
     return await this.client.readResource(params, options?.requestOptions);
   }
 
-  async getPrompt(params: GetPromptRequest["params"], options?: {
-    requestOptions?: RequestOptions;
-  }): Promise<GetPromptResult> {
+  async getPrompt(
+    params: GetPromptRequest["params"],
+    options?: {
+      requestOptions?: RequestOptions;
+    },
+  ): Promise<GetPromptResult> {
     return await this.client.getPrompt(params, options?.requestOptions);
   }
 
