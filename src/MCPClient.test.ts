@@ -60,7 +60,7 @@ const runWithTestServer = async ({
           resolve(event.session);
         });
       }),
-      client.connect({ sseUrl }),
+      client.connect({ url: sseUrl, type: "sse" }),
     ]);
 
     await run({ server, client, session });

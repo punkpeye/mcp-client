@@ -12,7 +12,7 @@ An [MCP](https://glama.ai/blog/2024-11-25-model-context-protocol-quickstart) cli
 
 ## Usage
 
-### Connecting to an SSE endpoint
+### Creating a client
 
 ```ts
 import { MCPClient } from "mcp-client";
@@ -21,9 +21,27 @@ const client = new MCPClient({
   name: "Test",
   version: "1.0.0",
 });
+```
 
+### Connecting using `stdio`
+
+```ts
 await client.connect({
-  sseUrl: "http://localhost:8080/sse",
+  type: "stdio",
+  args: ["--port", "8080"],
+  command: "node",
+  env: {
+    PORT: "8080",
+  },
+});
+```
+
+### Connecting using SSE
+
+```ts
+await client.connect({
+  type: "sse",
+  url: "http://localhost:8080/sse",
 });
 ```
 

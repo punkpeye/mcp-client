@@ -3,6 +3,7 @@ import {
   ClientOptions,
 } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import {
   CompleteRequest,
   CompleteResult,
@@ -26,6 +27,7 @@ import {
 import EventEmitter from "events";
 import { z } from "zod";
 import { StrictEventEmitter } from "strict-event-emitter-types";
+import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 
 export { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 
@@ -112,7 +114,7 @@ async function fetchAllPages<T>(
 
 export class MCPClient extends MCPClientEventEmitter {
   private client: Client;
-  private transports: SSEClientTransport[] = [];
+  private transports: Transport[] = [];
 
   constructor(clientInfo: Implementation, options?: ClientOptions) {
     super();
@@ -132,14 +134,33 @@ export class MCPClient extends MCPClientEventEmitter {
     );
   }
 
-  async connect({ sseUrl }: { sseUrl: string }): Promise<SSEClientTransport> {
-    const transport = new SSEClientTransport(new URL(sseUrl));
+  async connect(
+    options:
+      | { type: "sse"; url: string }
+      | {
+          type: "stdio";
+          args: string[];
+          command: string;
+          env: Record<string, string>;
+        },
+  ): Promise<void> {
+    if (options.type === "sse") {
+      const transport = new SSEClientTransport(new URL(options.url));
 
-    this.transports.push(transport);
+      this.transports.push(transport);
 
-    await this.client.connect(transport);
+      await this.client.connect(transport);
+    } else if (options.type === "stdio") {
+      const transport = new StdioClientTransport({
+        command: options.command,
+        env: options.env,
+        args: options.args,
+      });
 
-    return transport;
+      this.transports.push(transport);
+    } else {
+      throw new Error(`Unknown transport type`);
+    }
   }
 
   async ping(options?: { requestOptions?: RequestOptions }): Promise<null> {
