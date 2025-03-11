@@ -1,14 +1,16 @@
 import {
   Client,
-  ClientOptions
+  ClientOptions,
 } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import {
   Implementation,
+  ListResourcesResultSchema,
   ListToolsResultSchema,
   LoggingLevel,
   LoggingMessageNotificationSchema,
   Progress,
+  Resource,
   Tool,
   type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -137,7 +139,7 @@ export class MCPClient extends MCPClientEventEmitter {
     return null;
   }
 
-  async getTools(options?: {
+  async getAllTools(options?: {
     requestOptions?: RequestOptions;
   }): Promise<Tool[]> {
     return fetchAllPages(
@@ -145,6 +147,18 @@ export class MCPClient extends MCPClientEventEmitter {
       { method: "tools/list" },
       ListToolsResultSchema,
       (result) => result.tools,
+      options?.requestOptions,
+    );
+  }
+
+  async getAllResources(options?: {
+    requestOptions?: RequestOptions;
+  }): Promise<Resource[]> {
+    return fetchAllPages(
+      this.client,
+      { method: "resources/list" },
+      ListResourcesResultSchema,
+      (result) => result.resources,
       options?.requestOptions,
     );
   }
@@ -165,7 +179,9 @@ export class MCPClient extends MCPClientEventEmitter {
     return (await this.client.callTool(
       invocation,
       options?.resultSchema as any,
-      options?.requestOptions ? transformRequestOptions(options.requestOptions) : undefined
+      options?.requestOptions
+        ? transformRequestOptions(options.requestOptions)
+        : undefined,
     )) as TResult;
   }
 

@@ -54,15 +54,14 @@ const runWithTestServer = async ({
           },
         );
 
-      const [session] = await Promise.all([
-        new Promise<FastMCPSession>((resolve) => {
-          server.on("connect", (event) => {
-            
-            resolve(event.session);
-          });
-        }),
-        client.connect({ sseUrl }),
-      ]);
+    const [session] = await Promise.all([
+      new Promise<FastMCPSession>((resolve) => {
+        server.on("connect", (event) => {
+          resolve(event.session);
+        });
+      }),
+      client.connect({ sseUrl }),
+    ]);
 
     await run({ server, client, session });
   } finally {
@@ -111,7 +110,7 @@ test("gets tools", async () => {
       return server;
     },
     run: async ({ client }) => {
-      const tools = await client.getTools();
+      const tools = await client.getAllTools();
 
       expect(tools).toEqual([
         {
@@ -257,7 +256,12 @@ test("handles errors", async () => {
           },
         }),
       ).toEqual({
-        content: [{ type: "text", text: expect.stringContaining("Something went wrong") }],
+        content: [
+          {
+            type: "text",
+            text: expect.stringContaining("Something went wrong"),
+          },
+        ],
         isError: true,
       });
     },
@@ -365,7 +369,6 @@ test("sets logging levels", async () => {
   });
 });
 
-
 test("sends logging messages to the client", async () => {
   await runWithTestServer({
     server: async () => {
@@ -428,6 +431,39 @@ test("sends logging messages to the client", async () => {
         level: "warning",
         message: "warn message",
       });
+    },
+  });
+});
+
+test("adds resources", async () => {
+  await runWithTestServer({
+    server: async () => {
+      const server = new FastMCP({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      server.addResource({
+        uri: "file:///logs/app.log",
+        name: "Application Logs",
+        mimeType: "text/plain",
+        async load() {
+          return {
+            text: "Example log content",
+          };
+        },
+      });
+
+      return server;
+    },
+    run: async ({ client }) => {
+      expect(await client.getAllResources()).toEqual([
+        {
+          uri: "file:///logs/app.log",
+          name: "Application Logs",
+          mimeType: "text/plain",
+        },
+      ]);
     },
   });
 });
