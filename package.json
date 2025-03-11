@@ -27,6 +27,7 @@
   "repository": {
     "url": "https://github.com/punkpeye/mcp-client"
   },
+  "homepage": "https://glama.ai/mcp",
   "release": {
     "branches": [
       "main"
