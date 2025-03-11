@@ -35,7 +35,7 @@ export class MCPClient {
     sseUrl,
   }: {
     sseUrl: string;
-  }) {
+  }): Promise<SSEClientTransport> {
     const transport = new SSEClientTransport(
       new URL(sseUrl),
     );
