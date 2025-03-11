@@ -3,6 +3,7 @@ import { z } from "zod";
 import { test, expect, expectTypeOf } from "vitest";
 import { getRandomPort } from "get-port-please";
 import { FastMCP } from "fastmcp";
+import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 
 const runWithTestServer = async ({
   run,
@@ -296,6 +297,44 @@ test("handles errors", async () => {
         content: [{ type: "text", text: expect.stringContaining("Something went wrong") }],
         isError: true,
       });
+    },
+  });
+});
+
+test("calling an unknown tool throws McpError with MethodNotFound code", async () => {
+  await runWithTestServer({
+    server: async () => {
+      const server = new FastMCP({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      return server;
+    },
+    run: async ({ sseUrl }) => {
+      const client = new MCPClient({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      await client.connect({ sseUrl });
+
+      try {
+        await client.callTool({
+          name: "add",
+          arguments: {
+            a: 1,
+            b: 2,
+          },
+        });
+      } catch (error) {
+        console.log(error);
+
+        expect(error).toBeInstanceOf(McpError);
+
+        // @ts-expect-error - we know that error is an McpError
+        expect(error.code).toBe(ErrorCode.MethodNotFound);
+      }
     },
   });
 });
