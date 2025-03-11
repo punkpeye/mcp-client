@@ -19,9 +19,41 @@ await client.connect({
 });
 ```
 
-### Ping the server
+### Pinging the server
 
 ```ts
 await client.ping();
 ```
 
+### Calling a tool
+
+```ts
+const result = await client.callTool({
+  name: "add",
+  arguments: { a: 1, b: 2 },
+});
+```
+
+### Calling a tool with a custom result schema
+
+```ts
+const result = await client.callTool({
+  name: "add",
+  arguments: { a: 1, b: 2 },
+}, {
+  resultSchema: z.object({
+    content: z.array(z.object({
+      type: z.literal("text"),
+      text: z.string(),
+    })),
+  }),
+});
+```
+
+### Receiving notification
+
+```ts
+client.on("notification", (notification) => {
+  console.log(notification);
+});
+```

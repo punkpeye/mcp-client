@@ -1,6 +1,17 @@
-import { Client, ClientOptions } from "@modelcontextprotocol/sdk/client/index.js";
+import {
+  Client,
+  ClientOptions,
+} from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import { Implementation, Progress } from "@modelcontextprotocol/sdk/types.js";
+import {
+  Implementation,
+  Progress,
+  ProgressNotificationSchema,
+  type CallToolResult,
+} from "@modelcontextprotocol/sdk/types.js";
+import EventEmitter from "events";
+import { z } from "zod";
+import { StrictEventEmitter } from "strict-event-emitter-types";
 
 /**
  * Callback for progress notifications.
@@ -24,30 +35,75 @@ type RequestOptions = {
   timeout?: number;
 };
 
-export class MCPClient {
+type ProgressNotification = {
+  progressToken: string | number;
+  progress: number;
+  total?: number | undefined;
+  type: "progress";
+};
+
+type MCPClientEvents = {
+  notification: (event: ProgressNotification) => void;
+};
+
+const MCPClientEventEmitterBase: {
+  new (): StrictEventEmitter<EventEmitter, MCPClientEvents>;
+} = EventEmitter;
+
+class MCPClientEventEmitter extends MCPClientEventEmitterBase {}
+
+export class MCPClient extends MCPClientEventEmitter {
   private client: Client;
 
   constructor(clientInfo: Implementation, options?: ClientOptions) {
+    super();
+
     this.client = new Client(clientInfo, options);
+
+    this.client.setNotificationHandler(
+      ProgressNotificationSchema,
+      ({ params }) => {
+        this.emit("notification", {
+          progressToken: params.progressToken,
+          progress: params.progress,
+          total: params.total,
+          type: "progress",
+        });
+      },
+    );
   }
 
-  async connect({
-    sseUrl,
-  }: {
-    sseUrl: string;
-  }): Promise<SSEClientTransport> {
-    const transport = new SSEClientTransport(
-      new URL(sseUrl),
-    );
+  async connect({ sseUrl }: { sseUrl: string }): Promise<SSEClientTransport> {
+    const transport = new SSEClientTransport(new URL(sseUrl));
 
     await this.client.connect(transport);
 
     return transport;
   }
 
-  async ping(options?: RequestOptions): Promise<null> {
-    await this.client.ping(options);
+  async ping(options?: { requestOptions?: RequestOptions }): Promise<null> {
+    await this.client.ping(options?.requestOptions);
 
     return null;
+  }
+
+  async callTool<
+    TResultSchema extends z.ZodType = z.ZodType<CallToolResult>,
+    TResult = z.infer<TResultSchema>,
+  >(
+    invocation: {
+      name: string;
+      arguments?: Record<string, unknown>;
+    },
+    options?: {
+      resultSchema?: TResultSchema;
+      requestOptions?: RequestOptions;
+    },
+  ): Promise<TResult> {
+    return (await this.client.callTool(
+      invocation,
+      options?.resultSchema as any,
+      options?.requestOptions,
+    )) as TResult;
   }
 }
