@@ -1,8 +1,9 @@
 import { MCPClient, ErrorCode, McpError } from "./MCPClient.js";
 import { z } from "zod";
-import { test, expect, expectTypeOf } from "vitest";
+import { test, expect, expectTypeOf, vi } from "vitest";
 import { getRandomPort } from "get-port-please";
 import { FastMCP } from "fastmcp";
+import { setTimeout as delay } from "timers/promises";
 
 const runWithTestServer = async ({
   run,
@@ -334,6 +335,69 @@ test("calling an unknown tool throws McpError with MethodNotFound code", async (
         // @ts-expect-error - we know that error is an McpError
         expect(error.code).toBe(ErrorCode.MethodNotFound);
       }
+    },
+  });
+});
+
+test("tracks tool progress", async () => {
+  await runWithTestServer({
+    server: async () => {
+      const server = new FastMCP({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      server.addTool({
+        name: "add",
+        description: "Add two numbers",
+        parameters: z.object({
+          a: z.number(),
+          b: z.number(),
+        }),
+        execute: async (args, { reportProgress }) => {
+          reportProgress({
+            progress: 0,
+            total: 10,
+          });
+
+          await delay(100);
+
+          return String(args.a + args.b);
+        },
+      });
+
+      return server;
+    },
+    run: async ({ sseUrl }) => {
+      const client = new MCPClient({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      await client.connect({ sseUrl });
+
+      const onProgress = vi.fn();
+
+      await client.callTool(
+        {
+          name: "add",
+          arguments: {
+            a: 1,
+            b: 2,
+          },
+        },
+        {
+          requestOptions: {
+            onProgress,
+          },
+        },
+      );
+
+      expect(onProgress).toHaveBeenCalledTimes(1);
+      expect(onProgress).toHaveBeenCalledWith({
+        progress: 0,
+        total: 10,
+      });
     },
   });
 });

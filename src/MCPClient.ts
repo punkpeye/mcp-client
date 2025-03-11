@@ -1,6 +1,6 @@
 import {
   Client,
-  ClientOptions,
+  ClientOptions
 } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import {
@@ -37,6 +37,14 @@ type RequestOptions = {
    * If not specified, `DEFAULT_REQUEST_TIMEOUT_MSEC` will be used as the timeout.
    */
   timeout?: number;
+};
+
+const transformRequestOptions = (requestOptions: RequestOptions) => {
+  return {
+    onprogress: requestOptions.onProgress,
+    signal: requestOptions.signal,
+    timeout: requestOptions.timeout,
+  };
 };
 
 type ProgressNotification = {
@@ -79,7 +87,7 @@ async function fetchAllPages<T>(
     const response = await client.request(
       { method: requestParams.method, params },
       schema,
-      requestOptions,
+      requestOptions ? transformRequestOptions(requestOptions) : undefined,
     );
 
     // Use the getter function to extract items
@@ -100,18 +108,6 @@ export class MCPClient extends MCPClientEventEmitter {
     super();
 
     this.client = new Client(clientInfo, options);
-
-    this.client.setNotificationHandler(
-      ProgressNotificationSchema,
-      ({ params }) => {
-        this.emit("notification", {
-          progressToken: params.progressToken,
-          progress: params.progress,
-          total: params.total,
-          type: "progress",
-        });
-      },
-    );
   }
 
   async connect({ sseUrl }: { sseUrl: string }): Promise<SSEClientTransport> {
@@ -158,7 +154,7 @@ export class MCPClient extends MCPClientEventEmitter {
     return (await this.client.callTool(
       invocation,
       options?.resultSchema as any,
-      options?.requestOptions,
+      options?.requestOptions ? transformRequestOptions(options.requestOptions) : undefined
     )) as TResult;
   }
 
