@@ -1,7 +1,6 @@
 import { MCPClient } from "./MCPClient.js";
 import { z } from "zod";
-import { test, expect, vi } from "vitest";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { test, expect } from "vitest";
 import { getRandomPort } from "get-port-please";
 import { FastMCP } from "fastmcp";
 
