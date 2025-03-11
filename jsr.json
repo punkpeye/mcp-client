@@ -1,0 +1,6 @@
+{
+  "name": "@glama/mcp-client",
+  "version": "1.0.0",
+  "exports": "./src/MCPClient.ts",
+  "include": ["src/MCPClient.ts"]
+}
