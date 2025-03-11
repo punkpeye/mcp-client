@@ -45,7 +45,7 @@ export class MCPClient {
     return transport;
   }
 
-  async ping(options?: RequestOptions) {
+  async ping(options?: RequestOptions): Promise<null> {
     await this.client.ping(options);
 
     return null;
