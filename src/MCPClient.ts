@@ -6,8 +6,8 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import {
   Implementation,
   ListToolsResultSchema,
+  LoggingLevel,
   Progress,
-  ProgressNotificationSchema,
   Tool,
   type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -156,6 +156,10 @@ export class MCPClient extends MCPClientEventEmitter {
       options?.resultSchema as any,
       options?.requestOptions ? transformRequestOptions(options.requestOptions) : undefined
     )) as TResult;
+  }
+
+  async setLoggingLevel(level: LoggingLevel) {
+    await this.client.setLoggingLevel(level);
   }
 
   async close() {

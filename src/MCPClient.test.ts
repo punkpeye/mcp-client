@@ -2,20 +2,24 @@ import { MCPClient, ErrorCode, McpError } from "./MCPClient.js";
 import { z } from "zod";
 import { test, expect, expectTypeOf, vi } from "vitest";
 import { getRandomPort } from "get-port-please";
-import { FastMCP } from "fastmcp";
+import { FastMCP, FastMCPSession } from "fastmcp";
 import { setTimeout as delay } from "timers/promises";
 
 const runWithTestServer = async ({
   run,
+  client: createClient,
   server: createServer,
 }: {
   server?: () => Promise<FastMCP>;
+  client?: () => Promise<MCPClient>;
   run: ({
     server,
-    sseUrl,
+    client,
+    session,
   }: {
     server: FastMCP;
-    sseUrl: string;
+    client: MCPClient;
+    session: FastMCPSession;
   }) => Promise<void>;
 }) => {
   const port = await getRandomPort();
@@ -38,7 +42,29 @@ const runWithTestServer = async ({
   const sseUrl = `http://localhost:${port}/sse`;
 
   try {
-    await run({ server, sseUrl });
+    const client = createClient
+      ? await createClient()
+      : new MCPClient(
+          {
+            name: "example-client",
+            version: "1.0.0",
+          },
+          {
+            capabilities: {},
+          },
+        );
+
+      const [session] = await Promise.all([
+        new Promise<FastMCPSession>((resolve) => {
+          server.on("connect", (event) => {
+            
+            resolve(event.session);
+          });
+        }),
+        client.connect({ sseUrl }),
+      ]);
+
+    await run({ server, client, session });
   } finally {
     await server.stop();
   }
@@ -48,14 +74,7 @@ const runWithTestServer = async ({
 
 test("closes a connection", async () => {
   await runWithTestServer({
-    run: async ({ sseUrl }) => {
-      const client = new MCPClient({
-        name: "Test",
-        version: "1.0.0",
-      });
-
-      await client.connect({ sseUrl });
-
+    run: async ({ client }) => {
       await client.close();
     },
   });
@@ -63,14 +82,7 @@ test("closes a connection", async () => {
 
 test("pings a server", async () => {
   await runWithTestServer({
-    run: async ({ sseUrl }) => {
-      const client = new MCPClient({
-        name: "Test",
-        version: "1.0.0",
-      });
-
-      await client.connect({ sseUrl });
-
+    run: async ({ client }) => {
       await expect(client.ping()).resolves.toBeNull();
     },
   });
@@ -98,14 +110,7 @@ test("gets tools", async () => {
 
       return server;
     },
-    run: async ({ sseUrl }) => {
-      const client = new MCPClient({
-        name: "Test",
-        version: "1.0.0",
-      });
-
-      await client.connect({ sseUrl });
-
+    run: async ({ client }) => {
       const tools = await client.getTools();
 
       expect(tools).toEqual([
@@ -154,14 +159,7 @@ test("calls a tool", async () => {
 
       return server;
     },
-    run: async ({ sseUrl }) => {
-      const client = new MCPClient({
-        name: "Test",
-        version: "1.0.0",
-      });
-
-      await client.connect({ sseUrl });
-
+    run: async ({ client }) => {
       await expect(
         client.callTool({
           name: "add",
@@ -199,14 +197,7 @@ test("calls a tool with a custom result schema", async () => {
 
       return server;
     },
-    run: async ({ sseUrl }) => {
-      const client = new MCPClient({
-        name: "Test",
-        version: "1.0.0",
-      });
-
-      await client.connect({ sseUrl });
-
+    run: async ({ client }) => {
       const result = await client.callTool(
         {
           name: "add",
@@ -234,27 +225,6 @@ test("calls a tool with a custom result schema", async () => {
   });
 });
 
-test("receives progress notifications", async () => {
-  await runWithTestServer({
-    server: async () => {
-      const server = new FastMCP({
-        name: "Test",
-        version: "1.0.0",
-      });
-
-      return server;
-    },
-    run: async ({ sseUrl }) => {
-      const client = new MCPClient({
-        name: "Test",
-        version: "1.0.0",
-      });
-
-      await client.connect({ sseUrl });
-    },
-  });
-});
-
 test("handles errors", async () => {
   await runWithTestServer({
     server: async () => {
@@ -277,14 +247,7 @@ test("handles errors", async () => {
 
       return server;
     },
-    run: async ({ sseUrl }) => {
-      const client = new MCPClient({
-        name: "Test",
-        version: "1.0.0",
-      });
-
-      await client.connect({ sseUrl });
-
+    run: async ({ client }) => {
       expect(
         await client.callTool({
           name: "add",
@@ -311,14 +274,7 @@ test("calling an unknown tool throws McpError with MethodNotFound code", async (
 
       return server;
     },
-    run: async ({ sseUrl }) => {
-      const client = new MCPClient({
-        name: "Test",
-        version: "1.0.0",
-      });
-
-      await client.connect({ sseUrl });
-
+    run: async ({ client }) => {
       try {
         await client.callTool({
           name: "add",
@@ -368,14 +324,7 @@ test("tracks tool progress", async () => {
 
       return server;
     },
-    run: async ({ sseUrl }) => {
-      const client = new MCPClient({
-        name: "Test",
-        version: "1.0.0",
-      });
-
-      await client.connect({ sseUrl });
-
+    run: async ({ client }) => {
       const onProgress = vi.fn();
 
       await client.callTool(
@@ -398,6 +347,20 @@ test("tracks tool progress", async () => {
         progress: 0,
         total: 10,
       });
+    },
+  });
+});
+
+test("sets logging levels", async () => {
+  await runWithTestServer({
+    run: async ({ client, session }) => {
+      await client.setLoggingLevel("debug");
+
+      expect(session.loggingLevel).toBe("debug");
+
+      await client.setLoggingLevel("info");
+
+      expect(session.loggingLevel).toBe("info");
     },
   });
 });

@@ -68,6 +68,12 @@ const result = await client.callTool(
 const tools = await client.getTools();
 ```
 
+### Setting the logging level
+
+```ts
+await client.setLoggingLevel("debug");
+```
+
 ### Receiving notification
 
 ```ts
