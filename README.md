@@ -4,7 +4,7 @@ An [MCP](https://glama.ai/blog/2024-11-25-model-context-protocol-quickstart) cli
 
 ## Why?
 
-MCP SDK provides a client for the MCP protocol, but it's a little verbose for my taste. This client abstracts away some of the lower-level details and provides a more convenient API.
+[MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) provides a client for the MCP protocol, but it's a little verbose for my taste. This client abstracts away some of the lower-level details and provides a more convenient API.
 
 ## Usage
 

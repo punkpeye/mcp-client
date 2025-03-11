@@ -253,3 +253,49 @@ test("receives progress notifications", async () => {
     },
   });
 });
+
+test("handles errors", async () => {
+  await runWithTestServer({
+    server: async () => {
+      const server = new FastMCP({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      server.addTool({
+        name: "add",
+        description: "Add two numbers",
+        parameters: z.object({
+          a: z.number(),
+          b: z.number(),
+        }),
+        execute: async () => {
+          throw new Error("Something went wrong");
+        },
+      });
+
+      return server;
+    },
+    run: async ({ sseUrl }) => {
+      const client = new MCPClient({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      await client.connect({ sseUrl });
+
+      expect(
+        await client.callTool({
+          name: "add",
+          arguments: {
+            a: 1,
+            b: 2,
+          },
+        }),
+      ).toEqual({
+        content: [{ type: "text", text: expect.stringContaining("Something went wrong") }],
+        isError: true,
+      });
+    },
+  });
+});
