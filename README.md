@@ -74,10 +74,13 @@ const tools = await client.getTools();
 await client.setLoggingLevel("debug");
 ```
 
-### Receiving notification
+### Receiving logging messages
 
 ```ts
-client.on("notification", (notification) => {
-  console.log(notification);
+client.on("loggingMessage", (message) => {
+  console.log(message);
 });
 ```
+
+> [!NOTE]
+> Equivalent to `setNotificationHandler(LoggingMessageNotificationSchema, (message) => { ... })` in the MCP TypeScript SDK.

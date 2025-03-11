@@ -7,6 +7,7 @@ import {
   Implementation,
   ListToolsResultSchema,
   LoggingLevel,
+  LoggingMessageNotificationSchema,
   Progress,
   Tool,
   type CallToolResult,
@@ -47,15 +48,13 @@ const transformRequestOptions = (requestOptions: RequestOptions) => {
   };
 };
 
-type ProgressNotification = {
-  progressToken: string | number;
-  progress: number;
-  total?: number | undefined;
-  type: "progress";
+type LoggingMessageNotification = {
+  [key: string]: unknown;
+  level: LoggingLevel;
 };
 
 type MCPClientEvents = {
-  notification: (event: ProgressNotification) => void;
+  loggingMessage: (event: LoggingMessageNotification) => void;
 };
 
 const MCPClientEventEmitterBase: {
@@ -108,6 +107,18 @@ export class MCPClient extends MCPClientEventEmitter {
     super();
 
     this.client = new Client(clientInfo, options);
+
+    this.client.setNotificationHandler(
+      LoggingMessageNotificationSchema,
+      (message) => {
+        if (message.method === "notifications/message") {
+          this.emit("loggingMessage", {
+            level: message.params.level,
+            ...(message.params.data ?? {}),
+          });
+        }
+      },
+    );
   }
 
   async connect({ sseUrl }: { sseUrl: string }): Promise<SSEClientTransport> {

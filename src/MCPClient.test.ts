@@ -364,3 +364,70 @@ test("sets logging levels", async () => {
     },
   });
 });
+
+
+test("sends logging messages to the client", async () => {
+  await runWithTestServer({
+    server: async () => {
+      const server = new FastMCP({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      server.addTool({
+        name: "add",
+        description: "Add two numbers",
+        parameters: z.object({
+          a: z.number(),
+          b: z.number(),
+        }),
+        execute: async (args, { log }) => {
+          log.debug("debug message", {
+            foo: "bar",
+          });
+          log.error("error message");
+          log.info("info message");
+          log.warn("warn message");
+
+          return String(args.a + args.b);
+        },
+      });
+
+      return server;
+    },
+    run: async ({ client }) => {
+      const onLog = vi.fn();
+
+      client.on("loggingMessage", onLog);
+
+      await client.callTool({
+        name: "add",
+        arguments: {
+          a: 1,
+          b: 2,
+        },
+      });
+
+      expect(onLog).toHaveBeenCalledTimes(4);
+      expect(onLog).toHaveBeenNthCalledWith(1, {
+        level: "debug",
+        message: "debug message",
+        context: {
+          foo: "bar",
+        },
+      });
+      expect(onLog).toHaveBeenNthCalledWith(2, {
+        level: "error",
+        message: "error message",
+      });
+      expect(onLog).toHaveBeenNthCalledWith(3, {
+        level: "info",
+        message: "info message",
+      });
+      expect(onLog).toHaveBeenNthCalledWith(4, {
+        level: "warning",
+        message: "warn message",
+      });
+    },
+  });
+});
