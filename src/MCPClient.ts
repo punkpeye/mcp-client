@@ -1,6 +1,5 @@
 import { Client, ClientOptions } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { Implementation, Progress } from "@modelcontextprotocol/sdk/types.js";
 
 /**
