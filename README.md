@@ -65,7 +65,13 @@ const result = await client.callTool(
 ### Listing tools
 
 ```ts
-const tools = await client.getTools();
+const tools = await client.getAllTools();
+```
+
+### Listing resources
+
+```ts
+const resources = await client.getAllResources();
 ```
 
 ### Setting the logging level
