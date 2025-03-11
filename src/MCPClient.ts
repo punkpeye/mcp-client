@@ -4,12 +4,16 @@ import {
 } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import {
+  GetPromptRequest,
+  GetPromptResult,
   Implementation,
+  ListPromptsResultSchema,
   ListResourcesResultSchema,
   ListToolsResultSchema,
   LoggingLevel,
   LoggingMessageNotificationSchema,
   Progress,
+  Prompt,
   ReadResourceRequest,
   ReadResourceResult,
   Resource,
@@ -165,6 +169,18 @@ export class MCPClient extends MCPClientEventEmitter {
     );
   }
 
+  async getAllPrompts(options?: {
+    requestOptions?: RequestOptions;
+  }): Promise<Prompt[]> {
+    return fetchAllPages(
+      this.client,
+      { method: "prompts/list" },
+      ListPromptsResultSchema,
+      (result) => result.prompts,
+      options?.requestOptions,
+    );
+  }
+
   async callTool<
     TResultSchema extends z.ZodType = z.ZodType<CallToolResult>,
     TResult = z.infer<TResultSchema>,
@@ -194,6 +210,12 @@ export class MCPClient extends MCPClientEventEmitter {
     },
   ): Promise<ReadResourceResult> {
     return await this.client.readResource(params, options?.requestOptions);
+  }
+
+  async getPrompt(params: GetPromptRequest["params"], options?: {
+    requestOptions?: RequestOptions;
+  }): Promise<GetPromptResult> {
+    return await this.client.getPrompt(params, options?.requestOptions);
   }
 
   async setLoggingLevel(level: LoggingLevel) {

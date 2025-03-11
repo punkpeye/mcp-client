@@ -81,6 +81,18 @@ const resources = await client.getAllResources();
 const resource = await client.getResource({ uri: "file:///logs/app.log" });
 ```
 
+### Getting a prompt
+
+```ts
+const prompt = await client.getPrompt({ name: "git-commit" });
+```
+
+### Listing prompts
+
+```ts
+const prompts = await client.getAllPrompts();
+```
+
 ### Setting the logging level
 
 ```ts

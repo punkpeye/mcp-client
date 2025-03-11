@@ -558,3 +558,67 @@ test("clients reads a resource that returns multiple resources", async () => {
     },
   });
 });
+
+
+test("adds prompts", async () => {
+  await runWithTestServer({
+    server: async () => {
+      const server = new FastMCP({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      server.addPrompt({
+        name: "git-commit",
+        description: "Generate a Git commit message",
+        arguments: [
+          {
+            name: "changes",
+            description: "Git diff or description of changes",
+            required: true,
+          },
+        ],
+        load: async (args) => {
+          return `Generate a concise but descriptive commit message for these changes:\n\n${args.changes}`;
+        },
+      });
+
+      return server;
+    },
+    run: async ({ client }) => {
+      expect(
+        await client.getPrompt({
+          name: "git-commit",
+          arguments: {
+            changes: "foo",
+          },
+        }),
+      ).toEqual({
+        description: "Generate a Git commit message",
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Generate a concise but descriptive commit message for these changes:\n\nfoo",
+            },
+          },
+        ],
+      });
+
+      expect(await client.getAllPrompts()).toEqual([
+        {
+          name: "git-commit",
+          description: "Generate a Git commit message",
+          arguments: [
+            {
+              name: "changes",
+              description: "Git diff or description of changes",
+              required: true,
+            },
+          ],
+        },
+      ]);
+    },
+  });
+});
