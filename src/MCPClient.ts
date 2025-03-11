@@ -15,6 +15,8 @@ import EventEmitter from "events";
 import { z } from "zod";
 import { StrictEventEmitter } from "strict-event-emitter-types";
 
+export { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+
 /**
  * Callback for progress notifications.
  */

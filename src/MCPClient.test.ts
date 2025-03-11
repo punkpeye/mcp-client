@@ -1,9 +1,8 @@
-import { MCPClient } from "./MCPClient.js";
+import { MCPClient, ErrorCode, McpError } from "./MCPClient.js";
 import { z } from "zod";
 import { test, expect, expectTypeOf } from "vitest";
 import { getRandomPort } from "get-port-please";
 import { FastMCP } from "fastmcp";
-import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 
 const runWithTestServer = async ({
   run,
