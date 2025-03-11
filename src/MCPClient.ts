@@ -54,6 +54,7 @@ class MCPClientEventEmitter extends MCPClientEventEmitterBase {}
 
 export class MCPClient extends MCPClientEventEmitter {
   private client: Client;
+  private transports: SSEClientTransport[] = [];
 
   constructor(clientInfo: Implementation, options?: ClientOptions) {
     super();
@@ -75,6 +76,8 @@ export class MCPClient extends MCPClientEventEmitter {
 
   async connect({ sseUrl }: { sseUrl: string }): Promise<SSEClientTransport> {
     const transport = new SSEClientTransport(new URL(sseUrl));
+
+    this.transports.push(transport);
 
     await this.client.connect(transport);
 
@@ -105,5 +108,11 @@ export class MCPClient extends MCPClientEventEmitter {
       options?.resultSchema as any,
       options?.requestOptions,
     )) as TResult;
+  }
+
+  async close() {
+    for (const transport of this.transports) {
+      await transport.close();
+    }
   }
 }

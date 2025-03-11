@@ -45,6 +45,21 @@ const runWithTestServer = async ({
   return port;
 };
 
+test("closes a connection", async () => {
+  await runWithTestServer({
+    run: async ({ sseUrl }) => {
+      const client = new MCPClient({
+        name: "Test",
+        version: "1.0.0",
+      });
+
+      await client.connect({ sseUrl });
+
+      await client.close();
+    },
+  });
+});
+
 test("pings a server", async () => {
   await runWithTestServer({
     run: async ({ sseUrl }) => {

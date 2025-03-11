@@ -4,7 +4,7 @@
   "main": "dist/MCPClient.js",
   "scripts": {
     "build": "tsup",
-    "test": "vitest run && tsc && jsr publish --dry-run",
+    "test": "vitest run && tsc && jsr publish --dry-run --allow-dirty",
     "format": "prettier --write . && eslint --fix ."
   },
   "keywords": [
