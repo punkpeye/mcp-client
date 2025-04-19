@@ -3,7 +3,7 @@ import {
   ClientOptions,
 } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StdioClientTransport, getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js";
 import {
   CompleteRequest,
   CompleteResult,
@@ -141,7 +141,7 @@ export class MCPClient extends MCPClientEventEmitter {
           type: "stdio";
           args: string[];
           command: string;
-          env: Record<string, string>;
+          env?: Record<string, string>;
         },
   ): Promise<void> {
     if (options.type === "sse") {
@@ -151,13 +151,20 @@ export class MCPClient extends MCPClientEventEmitter {
 
       await this.client.connect(transport);
     } else if (options.type === "stdio") {
+      let mergedEnv: Record<string, string> | null;
+      if (options.env !== null && options.env !== undefined) {
+        mergedEnv = { ...getDefaultEnvironment(), ...options.env };
+      } else {
+        mergedEnv = getDefaultEnvironment();
+      }
       const transport = new StdioClientTransport({
         command: options.command,
-        env: options.env,
+        env: mergedEnv,
         args: options.args,
       });
 
       this.transports.push(transport);
+      this.client.connect(transport);
     } else {
       throw new Error(`Unknown transport type`);
     }
