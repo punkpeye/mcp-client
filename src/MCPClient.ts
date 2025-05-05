@@ -1,3 +1,5 @@
+import { IOType } from "node:child_process";
+import { Stream } from "node:stream";
 import {
   Client,
   ClientOptions,
@@ -142,6 +144,8 @@ export class MCPClient extends MCPClientEventEmitter {
           args: string[];
           command: string;
           env?: Record<string, string>;
+          stderr?: IOType | Stream | number;
+          cwd?: string;
         },
   ): Promise<void> {
     if (options.type === "sse") {
@@ -161,6 +165,8 @@ export class MCPClient extends MCPClientEventEmitter {
         command: options.command,
         env: mergedEnv,
         args: options.args,
+        stderr: options.stderr,
+        cwd: options.cwd,
       });
 
       this.transports.push(transport);
