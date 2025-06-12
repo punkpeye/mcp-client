@@ -170,7 +170,7 @@ export class MCPClient extends MCPClientEventEmitter {
       });
 
       this.transports.push(transport);
-      this.client.connect(transport);
+      await this.client.connect(transport);
     } else {
       throw new Error(`Unknown transport type`);
     }
