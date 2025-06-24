@@ -5,7 +5,11 @@ import {
   ClientOptions,
 } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import { StdioClientTransport, getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import {
+  StdioClientTransport,
+  getDefaultEnvironment,
+} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {
   CompleteRequest,
   CompleteResult,
@@ -139,6 +143,7 @@ export class MCPClient extends MCPClientEventEmitter {
   async connect(
     options:
       | { type: "sse"; url: string }
+      | { type?: "httpStream"; url: string }
       | {
           type: "stdio";
           args: string[];
@@ -150,6 +155,12 @@ export class MCPClient extends MCPClientEventEmitter {
   ): Promise<void> {
     if (options.type === "sse") {
       const transport = new SSEClientTransport(new URL(options.url));
+
+      this.transports.push(transport);
+
+      await this.client.connect(transport);
+    } else if (options.type === "httpStream" || options.type === undefined) {
+      const transport = new StreamableHTTPClientTransport(new URL(options.url));
 
       this.transports.push(transport);
 

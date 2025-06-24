@@ -32,14 +32,14 @@ const runWithTestServer = async ({
       });
 
   await server.start({
-    transportType: "sse",
-    sse: {
-      endpoint: "/sse",
+    transportType: "httpStream",
+    httpStream: {
+      endpoint: "/mcp",
       port,
     },
   });
 
-  const sseUrl = `http://localhost:${port}/sse`;
+  const mcpUrl = `http://localhost:${port}/mcp`;
 
   try {
     const client = createClient
@@ -60,7 +60,7 @@ const runWithTestServer = async ({
           resolve(event.session);
         });
       }),
-      client.connect({ url: sseUrl, type: "sse" }),
+      client.connect({ url: mcpUrl, type: "httpStream" }),
     ]);
 
     await run({ server, client, session });
@@ -399,7 +399,9 @@ test("sends logging messages to the client", async () => {
       return server;
     },
     run: async ({ client }) => {
-      const onLog = vi.fn();
+      const onLog = vi.fn().mockImplementation((x) => {
+        console.log("Log message:", x);
+      });
 
       client.on("loggingMessage", onLog);
 
@@ -409,6 +411,11 @@ test("sends logging messages to the client", async () => {
           a: 1,
           b: 2,
         },
+      });
+
+      // Wait for notifications to be processed
+      await vi.waitFor(() => expect(onLog).toHaveBeenCalledTimes(4), {
+        timeout: 1000,
       });
 
       expect(onLog).toHaveBeenCalledTimes(4);
@@ -690,7 +697,6 @@ test("lists resource templates", async () => {
       server.addResourceTemplate({
         uriTemplate: "file:///logs/{name}.log",
         name: "Application Logs",
-        mimeType: "text/plain",
         arguments: [
           {
             name: "name",
