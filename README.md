@@ -23,6 +23,15 @@ const client = new MCPClient({
 });
 ```
 
+### Connecting using Streaming HTTP
+
+```ts
+await client.connect({
+  type: "httpStream",
+  url: "http://localhost:8080/mcp",
+});
+```
+
 ### Connecting using `stdio`
 
 ```ts
@@ -36,7 +45,7 @@ await client.connect({
 });
 ```
 
-### Connecting using SSE
+### Connecting using SSE (Deprecated)
 
 ```ts
 await client.connect({
